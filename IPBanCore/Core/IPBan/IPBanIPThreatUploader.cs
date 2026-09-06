@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -87,11 +89,40 @@ public sealed class IPBanIPThreatUploader(IPBanService service) : IUpdater, IIPA
             var jsonObj = new { items = transform };
             // have to use newtonsoft here
             var postJson = System.Text.Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(jsonObj));
-            await service.RequestMaker.MakeRequestAsync(ipThreatReportApiUri,
-                postJson,
-                [new("X-API-KEY", apiKey)],
-                null,
-                cancelToken);
+
+            // use proxy for ipthreat api only if configured, otherwise connect directly
+            HttpClient client;
+            var ipThreatProxyAddress = (service.Config.IPThreatProxyAddress ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(ipThreatProxyAddress))
+            {
+                client = new HttpClient();
+            }
+            else
+            {
+                var handler = new HttpClientHandler();
+                handler.Proxy = new WebProxy(ipThreatProxyAddress);
+                var ipThreatProxyUserName = (service.Config.IPThreatProxyUserName ?? string.Empty).Trim();
+                var ipThreatProxyPassword = (service.Config.IPThreatProxyPassword ?? string.Empty).Trim();
+                if (!string.IsNullOrWhiteSpace(ipThreatProxyUserName) && !string.IsNullOrWhiteSpace(ipThreatProxyPassword))
+                {
+                    handler.Proxy.Credentials = new NetworkCredential(ipThreatProxyUserName, ipThreatProxyPassword);
+                }
+                client = new HttpClient(handler);
+            }
+            using (client)
+            {
+                HttpRequestMessage msg = new(HttpMethod.Post, ipThreatReportApiUri)
+                {
+                    Content = new ByteArrayContent(postJson)
+                };
+                msg.Content.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                msg.Headers.Add("X-API-KEY", apiKey);
+                using var responseMsg = await client.SendAsync(msg, cancelToken);
+                if (!responseMsg.IsSuccessStatusCode)
+                {
+                    throw new HttpRequestException("Request to " + ipThreatReportApiUri + " failed, status: " + responseMsg.StatusCode);
+                }
+            }
             Logger.Warn("Submitted {0} failed logins to ipthreat api", eventsCopy.Length);
         }
         catch (Exception ex)

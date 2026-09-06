@@ -503,4 +503,38 @@ e.g.
             ClassicAssert.AreEqual(0, r2.AllowPortRanges.Count);
         }
     }
+
+    [TestFixture]
+    public class IPBanConfigProxyTests
+    {
+        [Test]
+        public void TestIPThreatProxySettings_ParseFromXml()
+        {
+            string configXml = "<?xml version='1.0'?><configuration><appSettings>" +
+                "<add key='IPThreatProxyAddress' value='http://proxy:8080' />" +
+                "<add key='IPThreatProxyUserName' value='user' />" +
+                "<add key='IPThreatProxyPassword' value='pass' />" +
+                "</appSettings></configuration>";
+            var cfg = IPBanConfig.LoadFromXml(configXml);
+
+            ClassicAssert.AreEqual("http://proxy:8080", cfg.IPThreatProxyAddress);
+            ClassicAssert.AreEqual("user", cfg.IPThreatProxyUserName);
+            ClassicAssert.AreEqual("pass", cfg.IPThreatProxyPassword);
+        }
+
+        [Test]
+        public void TestIPThreatProxy_DefaultEmpty()
+        {
+            string configXml = "<?xml version='1.0'?><configuration><appSettings>" +
+                "<add key='IPThreatProxyAddress' value='' />" +
+                "<add key='IPThreatProxyUserName' value='' />" +
+                "<add key='IPThreatProxyPassword' value='' />" +
+                "</appSettings></configuration>";
+            var cfg = IPBanConfig.LoadFromXml(configXml);
+
+            ClassicAssert.IsTrue(string.IsNullOrEmpty(cfg.IPThreatProxyAddress));
+            ClassicAssert.IsTrue(string.IsNullOrEmpty(cfg.IPThreatProxyUserName));
+            ClassicAssert.IsTrue(string.IsNullOrEmpty(cfg.IPThreatProxyPassword));
+        }
+    }
 }

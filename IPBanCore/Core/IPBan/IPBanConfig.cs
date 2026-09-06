@@ -116,6 +116,9 @@ namespace DigitalRuby.IPBanCore
         private readonly TimeSpan minimumTimeBetweenSuccessfulLoginAttempts = TimeSpan.FromSeconds(5.0);
 
         private readonly string ipThreatApiKey = string.Empty;
+        private readonly string ipThreatProxyAddress = string.Empty;
+        private readonly string ipThreatProxyUserName = string.Empty;
+        private readonly string ipThreatProxyPassword = string.Empty;
         private readonly int failedLoginAttemptsBeforeBan = 5;
         private readonly bool resetFailedLoginCountForUnbannedIPAddresses;
         private readonly string firewallRulePrefix = "IPBan_";
@@ -187,6 +190,9 @@ namespace DigitalRuby.IPBanCore
             }
 
             TryGetConfig<string>("IPThreatApiKey", ref ipThreatApiKey, false);
+            TryGetConfig<string>("IPThreatProxyAddress", ref ipThreatProxyAddress, false);
+            TryGetConfig<string>("IPThreatProxyUserName", ref ipThreatProxyUserName, false);
+            TryGetConfig<string>("IPThreatProxyPassword", ref ipThreatProxyPassword, false);
             GetConfig<int>("FailedLoginAttemptsBeforeBan", ref failedLoginAttemptsBeforeBan, 1, 50);
             TryGetConfig<bool>("ResetFailedLoginCountForUnbannedIPAddresses", ref resetFailedLoginCountForUnbannedIPAddresses);
             GetConfigArray<TimeSpan>("BanTime", ref banTimes, emptyTimeSpanArray);
@@ -1019,6 +1025,21 @@ namespace DigitalRuby.IPBanCore
         /// Api key from https://ipthreat.net, if any
         /// </summary>
         public string IPThreatApiKey { get { return ipThreatApiKey; } }
+
+        /// <summary>
+        /// Proxy address for ipthreat api requests (e.g. http://proxy:8080). Empty to connect directly.
+        /// </summary>
+        public string IPThreatProxyAddress { get { return ipThreatProxyAddress; } }
+
+        /// <summary>
+        /// Proxy user name, if the ipthreat proxy requires authentication
+        /// </summary>
+        public string IPThreatProxyUserName { get { return ipThreatProxyUserName; } }
+
+        /// <summary>
+        /// Proxy password, if the ipthreat proxy requires authentication
+        /// </summary>
+        public string IPThreatProxyPassword { get { return ipThreatProxyPassword; } }
 
         /// <summary>
         /// Number of failed login attempts before a ban is initiated
